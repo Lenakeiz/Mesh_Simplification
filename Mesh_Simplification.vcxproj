@@ -216,6 +216,9 @@
     <ClInclude Include="..\..\shaders\shaders.h" />
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="Mesh_Simplification.h" />
+    <ClInclude Include="UI_button.h" />
+    <ClInclude Include="UI_element.h" />
+    <ClInclude Include="UI_sys.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl" />

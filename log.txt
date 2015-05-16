@@ -1,0 +1,307 @@
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Default vertex shader for materials. Extend this to deal with bump mapping, defered rendering, shadows etc.
+//
+
+// matrices
+uniform mat4 modelToProjection;
+uniform mat4 modelToCamera;
+
+// attributes from vertex buffer
+attribute vec4 pos;
+attribute vec2 uv;
+attribute vec3 normal;
+attribute vec4 color;
+
+// outputs
+varying vec3 normal_;
+varying vec2 uv_;
+varying vec4 color_;
+varying vec3 model_pos_;
+varying vec3 camera_pos_;
+
+void main() {
+  gl_Position = modelToProjection * pos;
+  vec3 tnormal = (modelToCamera * vec4(normal, 0.0)).xyz;
+  vec3 tpos = (modelToCamera * pos).xyz;
+  normal_ = tnormal;
+  uv_ = uv;
+  color_ = color;
+  camera_pos_ = tpos;
+  model_pos_ = pos.xyz;
+}
+
+
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// default frament shader for solid colours
+//
+
+// constant parameters
+uniform vec4 lighting[17];
+uniform int num_lights;
+uniform vec4 diffuse;
+
+// inputs
+varying vec2 uv_;
+varying vec3 normal_;
+varying vec3 camera_pos_;
+varying vec4 color_;
+
+void main() {
+  vec3 nnormal = normalize(normal_);
+  vec3 npos = camera_pos_;
+  vec3 diffuse_light = lighting[0].xyz;
+  for (int i = 0; i != num_lights; ++i) {
+    vec3 light_pos = lighting[i * 4 + 1].xyz;
+    vec3 light_direction = lighting[i * 4 + 2].xyz;
+    vec3 light_color = lighting[i * 4 + 3].xyz;
+    vec3 light_atten = lighting[i * 4 + 4].xyz;
+    float diffuse_factor = max(dot(light_direction, nnormal), 0.0);
+    diffuse_light += diffuse_factor * light_color;
+  }
+  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 1.0);
+
+}
+
+
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; attribute vec4 pos; attribute vec3 normal; attribute vec3 tangent; attribute vec3 bitangent; attribute vec2 uv; uniform mat4 modelToProjection; uniform mat4 modelToCamera; void main() { uv_ = uv; normal_ = (modelToCamera * vec4(normal,0)).xyz; tangent_ = (modelToCamera * vec4(tangent,0)).xyz; bitangent_ = (modelToCamera * vec4(bitangent,0)).xyz; gl_Position = modelToProjection * pos; }
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+const int max_lights = 4; varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; uniform vec4 light_uniforms[1+max_lights*4]; uniform int num_lights; uniform sampler2D samplers[6]; void main() { float shininess = texture2D(samplers[5], uv_).x * 255.0; vec3 bump = normalize(vec3(texture2D(samplers[4], uv_).xy-vec2(0.5, 0.5), 1)); vec3 nnormal = normalize(normal_); vec3 diffuse_light = vec3(0.3, 0.3, 0.3); vec3 specular_light = vec3(0, 0, 0); for (int i = 0; i != num_lights; ++i) { vec3 light_direction = light_uniforms[i * 4 + 2].xyz; vec3 light_color = light_uniforms[i * 4 + 3].xyz; vec3 half_direction = normalize(light_direction + vec3(0, 0, 1)); float diffuse_factor = max(dot(light_direction, nnormal), 0.0); float specular_factor = pow(max(dot(half_direction, nnormal), 0.0), shininess) * diffuse_factor; diffuse_light += diffuse_factor * light_color; specular_light += specular_factor * light_color; } vec4 diffuse = texture2D(samplers[0], uv_); vec4 ambient = texture2D(samplers[1], uv_); vec4 emission = texture2D(samplers[2], uv_); vec4 specular = texture2D(samplers[3], uv_); vec3 ambient_light = light_uniforms[0].xyz; gl_FragColor.xyz = ambient_light * ambient.xyz + diffuse_light * diffuse.xyz + emission.xyz + specular_light * specular.xyz ; gl_FragColor.w = diffuse.w; }
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; attribute vec4 pos; attribute vec3 normal; attribute vec3 tangent; attribute vec3 bitangent; attribute vec2 uv; attribute vec3 blendweight; attribute vec4 blendindices; uniform mat4 cameraToProjection; uniform mat4 modelToCamera[192]; void main() { uv_ = uv; ivec4 index = ivec4(blendindices); mat4 m2c0 = modelToCamera[index.x]; mat4 m2c1 = modelToCamera[index.y]; mat4 m2c2 = modelToCamera[index.z]; mat4 m2c3 = modelToCamera[index.w]; float blend0 = 1.0 - blendweight.x - blendweight.y - blendweight.z; mat4 blendedModelToCamera = m2c0 * blend0 + m2c1 * blendweight.x + m2c2 * blendweight.y + m2c3 * blendweight.z; normal_ = normalize((blendedModelToCamera * vec4(normal,0)).xyz); tangent_ = normalize((blendedModelToCamera * vec4(tangent,0)).xyz); bitangent_ = normalize((blendedModelToCamera * vec4(bitangent,0)).xyz); gl_Position = cameraToProjection * (blendedModelToCamera * pos); }
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+const int max_lights = 4; varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; uniform vec4 light_uniforms[1+max_lights*4]; uniform int num_lights; uniform sampler2D samplers[6]; void main() { float shininess = texture2D(samplers[5], uv_).x * 255.0; vec3 bump = normalize(vec3(texture2D(samplers[4], uv_).xy-vec2(0.5, 0.5), 1)); vec3 nnormal = normalize(normal_); vec3 diffuse_light = vec3(0.3, 0.3, 0.3); vec3 specular_light = vec3(0, 0, 0); for (int i = 0; i != num_lights; ++i) { vec3 light_direction = light_uniforms[i * 4 + 2].xyz; vec3 light_color = light_uniforms[i * 4 + 3].xyz; vec3 half_direction = normalize(light_direction + vec3(0, 0, 1)); float diffuse_factor = max(dot(light_direction, nnormal), 0.0); float specular_factor = pow(max(dot(half_direction, nnormal), 0.0), shininess) * diffuse_factor; diffuse_light += diffuse_factor * light_color; specular_light += specular_factor * light_color; } vec4 diffuse = texture2D(samplers[0], uv_); vec4 ambient = texture2D(samplers[1], uv_); vec4 emission = texture2D(samplers[2], uv_); vec4 specular = texture2D(samplers[3], uv_); vec3 ambient_light = light_uniforms[0].xyz; gl_FragColor.xyz = ambient_light * ambient.xyz + diffuse_light * diffuse.xyz + emission.xyz + specular_light * specular.xyz ; gl_FragColor.w = diffuse.w; }
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Default vertex shader for materials. Extend this to deal with bump mapping, defered rendering, shadows etc.
+//
+
+// matrices
+uniform mat4 modelToProjection;
+uniform mat4 modelToCamera;
+
+// attributes from vertex buffer
+attribute vec4 pos;
+attribute vec2 uv;
+attribute vec3 normal;
+attribute vec4 color;
+
+// outputs
+varying vec3 normal_;
+varying vec2 uv_;
+varying vec4 color_;
+varying vec3 model_pos_;
+varying vec3 camera_pos_;
+
+void main() {
+  gl_Position = modelToProjection * pos;
+  vec3 tnormal = (modelToCamera * vec4(normal, 0.0)).xyz;
+  vec3 tpos = (modelToCamera * pos).xyz;
+  normal_ = tnormal;
+  uv_ = uv;
+  color_ = color;
+  camera_pos_ = tpos;
+  model_pos_ = pos.xyz;
+}
+
+
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// default frament shader for solid colours
+//
+
+// constant parameters
+uniform vec4 lighting[17];
+uniform int num_lights;
+uniform vec4 diffuse;
+
+// inputs
+varying vec2 uv_;
+varying vec3 normal_;
+varying vec3 camera_pos_;
+varying vec4 color_;
+
+void main() {
+  vec3 nnormal = normalize(normal_);
+  vec3 npos = camera_pos_;
+  vec3 diffuse_light = lighting[0].xyz;
+  for (int i = 0; i != num_lights; ++i) {
+    vec3 light_pos = lighting[i * 4 + 1].xyz;
+    vec3 light_direction = lighting[i * 4 + 2].xyz;
+    vec3 light_color = lighting[i * 4 + 3].xyz;
+    vec3 light_atten = lighting[i * 4 + 4].xyz;
+    float diffuse_factor = max(dot(light_direction, nnormal), 0.0);
+    diffuse_light += diffuse_factor * light_color;
+  }
+  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 1.0);
+
+}
+
+
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; attribute vec4 pos; attribute vec3 normal; attribute vec3 tangent; attribute vec3 bitangent; attribute vec2 uv; uniform mat4 modelToProjection; uniform mat4 modelToCamera; void main() { uv_ = uv; normal_ = (modelToCamera * vec4(normal,0)).xyz; tangent_ = (modelToCamera * vec4(tangent,0)).xyz; bitangent_ = (modelToCamera * vec4(bitangent,0)).xyz; gl_Position = modelToProjection * pos; }
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+const int max_lights = 4; varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; uniform vec4 light_uniforms[1+max_lights*4]; uniform int num_lights; uniform sampler2D samplers[6]; void main() { float shininess = texture2D(samplers[5], uv_).x * 255.0; vec3 bump = normalize(vec3(texture2D(samplers[4], uv_).xy-vec2(0.5, 0.5), 1)); vec3 nnormal = normalize(normal_); vec3 diffuse_light = vec3(0.3, 0.3, 0.3); vec3 specular_light = vec3(0, 0, 0); for (int i = 0; i != num_lights; ++i) { vec3 light_direction = light_uniforms[i * 4 + 2].xyz; vec3 light_color = light_uniforms[i * 4 + 3].xyz; vec3 half_direction = normalize(light_direction + vec3(0, 0, 1)); float diffuse_factor = max(dot(light_direction, nnormal), 0.0); float specular_factor = pow(max(dot(half_direction, nnormal), 0.0), shininess) * diffuse_factor; diffuse_light += diffuse_factor * light_color; specular_light += specular_factor * light_color; } vec4 diffuse = texture2D(samplers[0], uv_); vec4 ambient = texture2D(samplers[1], uv_); vec4 emission = texture2D(samplers[2], uv_); vec4 specular = texture2D(samplers[3], uv_); vec3 ambient_light = light_uniforms[0].xyz; gl_FragColor.xyz = ambient_light * ambient.xyz + diffuse_light * diffuse.xyz + emission.xyz + specular_light * specular.xyz ; gl_FragColor.w = diffuse.w; }
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; attribute vec4 pos; attribute vec3 normal; attribute vec3 tangent; attribute vec3 bitangent; attribute vec2 uv; attribute vec3 blendweight; attribute vec4 blendindices; uniform mat4 cameraToProjection; uniform mat4 modelToCamera[192]; void main() { uv_ = uv; ivec4 index = ivec4(blendindices); mat4 m2c0 = modelToCamera[index.x]; mat4 m2c1 = modelToCamera[index.y]; mat4 m2c2 = modelToCamera[index.z]; mat4 m2c3 = modelToCamera[index.w]; float blend0 = 1.0 - blendweight.x - blendweight.y - blendweight.z; mat4 blendedModelToCamera = m2c0 * blend0 + m2c1 * blendweight.x + m2c2 * blendweight.y + m2c3 * blendweight.z; normal_ = normalize((blendedModelToCamera * vec4(normal,0)).xyz); tangent_ = normalize((blendedModelToCamera * vec4(tangent,0)).xyz); bitangent_ = normalize((blendedModelToCamera * vec4(bitangent,0)).xyz); gl_Position = cameraToProjection * (blendedModelToCamera * pos); }
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+const int max_lights = 4; varying vec2 uv_; varying vec3 normal_; varying vec3 tangent_; varying vec3 bitangent_; uniform vec4 light_uniforms[1+max_lights*4]; uniform int num_lights; uniform sampler2D samplers[6]; void main() { float shininess = texture2D(samplers[5], uv_).x * 255.0; vec3 bump = normalize(vec3(texture2D(samplers[4], uv_).xy-vec2(0.5, 0.5), 1)); vec3 nnormal = normalize(normal_); vec3 diffuse_light = vec3(0.3, 0.3, 0.3); vec3 specular_light = vec3(0, 0, 0); for (int i = 0; i != num_lights; ++i) { vec3 light_direction = light_uniforms[i * 4 + 2].xyz; vec3 light_color = light_uniforms[i * 4 + 3].xyz; vec3 half_direction = normalize(light_direction + vec3(0, 0, 1)); float diffuse_factor = max(dot(light_direction, nnormal), 0.0); float specular_factor = pow(max(dot(half_direction, nnormal), 0.0), shininess) * diffuse_factor; diffuse_light += diffuse_factor * light_color; specular_light += specular_factor * light_color; } vec4 diffuse = texture2D(samplers[0], uv_); vec4 ambient = texture2D(samplers[1], uv_); vec4 emission = texture2D(samplers[2], uv_); vec4 specular = texture2D(samplers[3], uv_); vec3 ambient_light = light_uniforms[0].xyz; gl_FragColor.xyz = ambient_light * ambient.xyz + diffuse_light * diffuse.xyz + emission.xyz + specular_light * specular.xyz ; gl_FragColor.w = diffuse.w; }
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.
+Vertex shader error:
+Vertex shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Default vertex shader for materials. Extend this to deal with bump mapping, defered rendering, shadows etc.
+//
+
+// matrices
+uniform mat4 modelToProjection;
+uniform mat4 modelToCamera;
+
+// attributes from vertex buffer
+attribute vec4 pos;
+attribute vec2 uv;
+attribute vec3 normal;
+attribute vec4 color;
+
+// outputs
+varying vec3 normal_;
+varying vec2 uv_;
+varying vec4 color_;
+varying vec3 model_pos_;
+varying vec3 camera_pos_;
+
+void main() {
+  gl_Position = modelToProjection * pos;
+  vec3 tnormal = (modelToCamera * vec4(normal, 0.0)).xyz;
+  vec3 tpos = (modelToCamera * pos).xyz;
+  normal_ = tnormal;
+  uv_ = uv;
+  color_ = color;
+  camera_pos_ = tpos;
+  model_pos_ = pos.xyz;
+}
+
+
+
+
+
+Fragment shader error:
+Fragment shader was successfully compiled to run on hardware.
+ 
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// default frament shader for solid colours
+//
+
+// constant parameters
+uniform vec4 lighting[17];
+uniform int num_lights;
+uniform vec4 diffuse;
+
+// inputs
+varying vec2 uv_;
+varying vec3 normal_;
+varying vec3 camera_pos_;
+varying vec4 color_;
+
+void main() {
+  vec3 nnormal = normalize(normal_);
+  vec3 npos = camera_pos_;
+  vec3 diffuse_light = lighting[0].xyz;
+  for (int i = 0; i != num_lights; ++i) {
+    vec3 light_pos = lighting[i * 4 + 1].xyz;
+    vec3 light_direction = lighting[i * 4 + 2].xyz;
+    vec3 light_color = lighting[i * 4 + 3].xyz;
+    vec3 light_atten = lighting[i * 4 + 4].xyz;
+    float diffuse_factor = max(dot(light_direction, nnormal), 0.0);
+    diffuse_light += diffuse_factor * light_color;
+  }
+  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 1.0);
+
+}
+
+
+
+
+
+program errors during linking
+Vertex shader(s) linked, fragment shader(s) linked.

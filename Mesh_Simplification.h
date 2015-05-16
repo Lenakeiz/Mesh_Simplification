@@ -22,7 +22,7 @@ namespace octet {
       app_scene->create_default_camera_and_lights();
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
-      GUI_sys.init(vx, vy, this, "assets/UI_sprite_sheet.gif", "assets/UI_sprite_sheet_mask.gif");
+      GUI_sys.init(vx, vy, this);
     }
 
     /// this is called to draw the world

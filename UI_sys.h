@@ -114,7 +114,7 @@ namespace octet
         
         if (texture_string.size() > 0)
         {   
-          sh = new param_shader("shaders/default.vs", "src/examples/UI_Tool/UI_Texture.fs");
+          sh = new param_shader("shaders/default.vs", "src/examples/Mesh_Simplification/UI_Texture.fs");
           mat = new material(new image(texture_string), NULL, sh);
           mat->add_sampler(1, app_utils::get_atom("diffuse_mask"), new image(texture_mask), new sampler());
         }
