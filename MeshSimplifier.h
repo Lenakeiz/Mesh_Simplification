@@ -12,10 +12,10 @@ public:
 
 
 
-    virtual bool Init(octet::mesh& toSimplify) = 0{}
+    virtual bool Init(octet::ref<octet::mesh> toSimplify) = 0{}
 
-    virtual bool Simplify(octet::mesh& toSimplify) = 0{}
-    virtual bool Simplify(const octet::mesh& toSimplify, octet::mesh* toWritten);
+    virtual bool Simplify(octet::ref<octet::mesh> toSimplify) = 0{}
+    virtual bool Simplify(const octet::ref<octet::mesh> toSimplify, octet::mesh* toWritten);
 private:
 
 
