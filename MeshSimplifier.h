@@ -10,6 +10,10 @@ public:
     MeshSimplifier();
     virtual ~MeshSimplifier() = 0{}
 
+
+
+    virtual bool Init(octet::mesh& toSimplify) = 0{}
+
     virtual bool Simplify(octet::mesh& toSimplify) = 0{}
     virtual bool Simplify(const octet::mesh& toSimplify, octet::mesh* toWritten);
 private:
