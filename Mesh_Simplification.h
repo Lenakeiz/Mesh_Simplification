@@ -6,6 +6,9 @@
 //
 namespace octet {
   /// Scene containing a box with octet.
+
+#include "EQMeshSimplifier.h"
+
   class Mesh_Simplification : public app {
     // scene for drawing box
     ref<visual_scene> app_scene;

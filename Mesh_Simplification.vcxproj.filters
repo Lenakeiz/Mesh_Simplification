@@ -439,6 +439,12 @@
     <ClInclude Include="UI_sys.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="EQMeshSimplifier.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSimplifier.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">
