@@ -13,18 +13,25 @@ namespace octet {
     // scene for drawing box
     ref<visual_scene> app_scene;
     UI_sys GUI_sys;
-    UI_Algo_start_Button* m_xSubmitButton;
+    UI_Algo_start_Button* m_pxSubmitButton;
+    UI_Algo_start_Button* m_pxContinueButton;
+    UI_Algo_start_Button* m_pxSaveMeshButton;
+    Mesh_Name_Field* m_pxDeselect;
 
     string m_sMeshURL;
     int m_iTargetFaces;
     int m_iTargettri;
     float m_fVertProxi;
     float m_fMaxErrorth;
+    int m_iSimplificationPerRun;
 
     int m_iFieldNumber;
     bool m_bMeshNameOnFocus = false;
+    bool m_bDeselOnFocus = false;
     bool m_bFieldSubmit = false;
-    
+    bool m_bContinue = false;
+    bool m_bSaveMesh = false;
+
     dynarray<string> m_sAlgoString;
     dynarray<Mesh_Name_Field*> m_pxUserInputFields;
     dynarray<int> m_xUserInputKeyCode;
@@ -153,6 +160,8 @@ namespace octet {
           break;
         case 4:m_xMeshText[i]->format("Max Error Threshold:\n%s", m_sAlgoString[i].c_str());
           break;
+        case 5:m_xMeshText[i]->format("Continues Per Run:\n%s", m_sAlgoString[i].c_str());
+          break;
       }
        m_xMeshText[i]->update();
       }
@@ -245,6 +254,19 @@ namespace octet {
         }
       }
 
+      m_iSimplificationPerRun = 0;
+      for (int i = 0; i<m_sAlgoString[5].size(); i++)
+      {
+        m_iTargettri *= 10;
+        if (m_sAlgoString[5][i] == '.' || m_sAlgoString[5][i] > 57 || m_sAlgoString[5][i] < 48)
+        {
+          break;
+        }
+        else
+        {
+          m_iSimplificationPerRun += m_sAlgoString[5][i] - 48;
+        }
+      }
     }
   public:
     /// this is called when we construct the class before everything is initialised.
@@ -253,6 +275,10 @@ namespace octet {
 
     ~Mesh_Simplification() {
       delete m_xoverlay;
+      delete m_pxContinueButton;
+      delete m_pxSubmitButton;
+      delete m_pxSaveMeshButton;
+      delete m_pxDeselect;
       for (int i = 0; i<m_xMeshText.size();i++)
       {
         delete m_xMeshText[i];
@@ -262,6 +288,7 @@ namespace octet {
         delete m_pxUserInputFields[i];
       }      
     }
+    // texture for on select and deselect on field
 
     /// this is called once OpenGL is initialized
     void app_init() {
@@ -272,28 +299,35 @@ namespace octet {
       FillInputKeyArray();
 
       //UI Buttons
-      m_xSubmitButton = new UI_Algo_start_Button(vec2(vx/2, vy-50), vec2(50,35), -1.0f, vec2(), vec2());
-      Mesh_Name_Field* xTextFieldMeshName = new Mesh_Name_Field(vec2(75, 75), vec2(150, 30), -1.0f, vec2(), vec2());
-      Mesh_Name_Field* xTextFieldsTargetNumFaces = new Mesh_Name_Field(vec2(75, 150), vec2(150, 30), -1.0f, vec2(), vec2());
-      Mesh_Name_Field* xTextFieldsTargetNumTri = new Mesh_Name_Field(vec2(75, 225), vec2(150, 30), -1.0f, vec2(), vec2());
-      Mesh_Name_Field* xTextFieldVtxProxPair = new Mesh_Name_Field(vec2(75, 300), vec2(150, 30), -1.0f, vec2(), vec2());
-      Mesh_Name_Field* xTextFieldMaxErrTh = new Mesh_Name_Field(vec2(75, 375), vec2(150, 30), -1.0f, vec2(), vec2());
-      
+      m_pxSubmitButton = new UI_Algo_start_Button(vec2(vx/2-150, vy-50), vec2(50,35), -1.0f, vec2(0.0f,0.7470f), vec2(0.25f,0.9335f));
+      m_pxContinueButton = new UI_Algo_start_Button(vec2(vx / 2, vy - 50), vec2(50, 35), -1.0f, vec2(0.5039f,0.8144f), vec2(0.7568f,1.0f));
+      m_pxSaveMeshButton = new UI_Algo_start_Button(vec2(vx / 2 + 150, vy - 50), vec2(50, 35), -1.0f, vec2(0.2548f, 0.7470f), vec2(0.5019f, 0.9335f));
+      m_pxDeselect = new Mesh_Name_Field(vec2(0, 0), vec2(vx, vy), -1.1f, vec2(0.0f,0.0f), vec2(0.25f,0.25f));
+      Mesh_Name_Field* xTextFieldMeshName = new Mesh_Name_Field(vec2(75, 75), vec2(150, 30), -1.0f, vec2(0.0f,0.9355f), vec2(0.25f,1.0f));
+      Mesh_Name_Field* xTextFieldsTargetNumFaces = new Mesh_Name_Field(vec2(75, 150), vec2(150, 30), -1.0f, vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+      Mesh_Name_Field* xTextFieldsTargetNumTri = new Mesh_Name_Field(vec2(75, 225), vec2(150, 30), -1.0f, vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+      Mesh_Name_Field* xTextFieldVtxProxPair = new Mesh_Name_Field(vec2(75, 300), vec2(150, 30), -1.0f, vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+      Mesh_Name_Field* xTextFieldMaxErrTh = new Mesh_Name_Field(vec2(75, 375), vec2(150, 30), -1.0f, vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+      Mesh_Name_Field* xContinuePerRun = new Mesh_Name_Field(vec2(75, 450), vec2(150, 30), -1.0f, vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
       //create  new name fields, add to the system then to the dynarray 
-      GUI_sys.init(vx, vy, this);   
-      GUI_sys.add_element(m_xSubmitButton);
+      GUI_sys.init(vx, vy, this,"assets/UI_Mesh_Simplification_Sprite_Sheet.gif","assets/UI_Mesh_Simplification_Sprite_Sheet_Mask.gif");   
+      GUI_sys.add_element(m_pxSubmitButton);
+      GUI_sys.add_element(m_pxContinueButton);
       GUI_sys.add_element(xTextFieldMeshName);
       GUI_sys.add_element(xTextFieldsTargetNumFaces);
       GUI_sys.add_element(xTextFieldsTargetNumTri);
       GUI_sys.add_element(xTextFieldVtxProxPair);
       GUI_sys.add_element(xTextFieldMaxErrTh);
+      GUI_sys.add_element(xContinuePerRun);
+      GUI_sys.add_element(m_pxSaveMeshButton);
+      GUI_sys.add_element(m_pxDeselect);
       //the dynarray for the UI Textfields
       m_pxUserInputFields.push_back(xTextFieldMeshName);
       m_pxUserInputFields.push_back(xTextFieldsTargetNumFaces);
       m_pxUserInputFields.push_back(xTextFieldsTargetNumTri);
       m_pxUserInputFields.push_back(xTextFieldVtxProxPair);
       m_pxUserInputFields.push_back(xTextFieldMaxErrTh);
-      
+      m_pxUserInputFields.push_back(xContinuePerRun);
       //The Strings Inputs from the user 
       //push back the string in the dyne array
       string sMeshName;
@@ -301,12 +335,14 @@ namespace octet {
       string sTargetNumTri;
       string sVtxProxPair;
       string sMaxErrTh;
+      string sContinuePerRun;
       m_sAlgoString.push_back(sMeshName);
       m_sAlgoString.push_back(sTargetNumFaces);
       m_sAlgoString.push_back(sTargetNumTri);
       m_sAlgoString.push_back(sVtxProxPair);
       m_sAlgoString.push_back(sMaxErrTh);
-      
+      m_sAlgoString.push_back(sContinuePerRun);
+
       //UI Text
       m_iTextVX = vx;
       m_iTextVY = vy;
@@ -329,17 +365,23 @@ namespace octet {
 
       aabb bb_Text5(vec3(150 - vx / 2, vy / 2 - 390, 1.0f), vec3(150.0f, 30.0f, 0.0f));
       mesh_text* UIText5 = new mesh_text(font, "", &bb_Text5);
+
+      aabb bb_Text6(vec3(150 - vx / 2, vy / 2 - 465, 1.0f), vec3(150.0f, 30.0f, 0.0f));
+      mesh_text* UIText6 = new mesh_text(font, "", &bb_Text6);
+
       m_xoverlay->add_mesh_text(UIText1);
       m_xoverlay->add_mesh_text(UIText2);
       m_xoverlay->add_mesh_text(UIText3);
       m_xoverlay->add_mesh_text(UIText4);
       m_xoverlay->add_mesh_text(UIText5);
-    
+      m_xoverlay->add_mesh_text(UIText6);
+
       m_xMeshText.push_back(UIText1);
       m_xMeshText.push_back(UIText2);
       m_xMeshText.push_back(UIText3);
       m_xMeshText.push_back(UIText4);
       m_xMeshText.push_back(UIText5);
+      m_xMeshText.push_back(UIText6);
     }
 
     /// this is called to draw the world
@@ -357,12 +399,37 @@ namespace octet {
           m_bMeshNameOnFocus = m_pxUserInputFields[m_iFieldNumber]->IsMeshStringOnFocus();
           if (m_bMeshNameOnFocus)
             { 
+              m_pxUserInputFields[m_iFieldNumber]->Set_texture_UV(vec2(0.26f, 0.9355f), vec2(0.51f, 1.0f));
+              m_pxDeselect->SetMeshStringOnFocus(false);
               break;
             }
         }
       }
       if (m_bMeshNameOnFocus)
       {
+        m_bDeselOnFocus = m_pxDeselect->IsMeshStringOnFocus();
+        if (m_bDeselOnFocus)
+        {
+          m_bMeshNameOnFocus=false;
+          m_pxUserInputFields[m_iFieldNumber]->SetMeshStringOnFocus(false); 
+          m_pxUserInputFields[m_iFieldNumber]->Set_texture_UV(vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+          m_pxDeselect->SetMeshStringOnFocus(false);
+        }
+        for (int j = 0; j<m_pxUserInputFields.size(); j++)
+        {
+          if (j!=m_iFieldNumber)
+          {
+            if (m_pxUserInputFields[j]->IsMeshStringOnFocus())
+            {
+              m_pxUserInputFields[m_iFieldNumber]->SetMeshStringOnFocus(false); // change texture to normal
+              m_pxUserInputFields[m_iFieldNumber]->Set_texture_UV(vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
+              m_iFieldNumber = j;
+              m_pxUserInputFields[m_iFieldNumber]->Set_texture_UV(vec2(0.26f, 0.9355f), vec2(0.51f, 1.0f));
+              m_pxDeselect->SetMeshStringOnFocus(false);
+              break;
+            }            
+          }
+        }
         for (int i = 0; i<m_xUserInputKeyValue.size(); i++)//fill the size of dynarray
         {
           if (is_key_going_down(m_xUserInputKeyCode[i]))//check for all the a-z and number . and enter see for A-Z make a dynarray for codes
@@ -376,11 +443,12 @@ namespace octet {
               if(i==0)//enter presed
               {
                 m_bMeshNameOnFocus = false;              
-                m_pxUserInputFields[m_iFieldNumber]->SetMeshStringOnFocus(false);
-                
+                m_pxUserInputFields[m_iFieldNumber]->SetMeshStringOnFocus(false); // change the texture of the field
+                m_pxUserInputFields[m_iFieldNumber]->Set_texture_UV(vec2(0.0f, 0.9355f), vec2(0.25f, 1.0f));
               }
               if (i==1)//backspace pressed
               {
+                if (m_sAlgoString[m_iFieldNumber].size()>0)
                 m_sAlgoString[m_iFieldNumber][m_sAlgoString[m_iFieldNumber].size()-1] = '\0';
               }
             }
@@ -388,12 +456,27 @@ namespace octet {
           }
         }
       }     
-      m_bFieldSubmit = m_xSubmitButton->IsSubmit();
+      m_bFieldSubmit = m_pxSubmitButton->IsSubmit();
       if (m_bFieldSubmit)
       {
-        m_xSubmitButton->SetSubmit(false);
+        m_pxSubmitButton->SetSubmit(false);
         ConvertStringsToNumbers();
         //start the algo
+      }
+
+      m_bContinue = m_pxContinueButton->IsSubmit();
+      if (m_bContinue)
+      {
+        m_pxContinueButton->SetSubmit(false);
+        ConvertStringsToNumbers();
+        //continue to the next step
+      }
+
+      m_bSaveMesh = m_pxSaveMeshButton->IsSubmit();
+      if (m_bSaveMesh)
+      {
+        m_pxSaveMeshButton->SetSubmit(false);
+        //if the mesh is made save it
       }
       app_scene->render((float)vx / vy);
       GUI_sys.update(vx, vy);
