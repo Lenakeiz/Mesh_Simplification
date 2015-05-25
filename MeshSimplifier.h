@@ -7,18 +7,16 @@
 class MeshSimplifier
 {
 public:
-    MeshSimplifier();
+    MeshSimplifier(){}
     virtual ~MeshSimplifier() = 0{}
 
 
 
-    virtual bool Init(octet::ref<octet::mesh> toSimplify) = 0{}
+    virtual bool Init(octet::ref<octet::mesh> toSimplify) = 0{return false;}
 
-    virtual bool Simplify(octet::ref<octet::mesh> toSimplify) = 0{}
-    virtual bool Simplify(const octet::ref<octet::mesh> toSimplify, octet::mesh* toWritten);
+    virtual bool Simplify(octet::ref<octet::mesh> toSimplify) = 0{return false;}
+    virtual bool Simplify(const octet::ref<octet::mesh> toSimplify, octet::mesh* toWritten){return false;}
 private:
-
-
 };
 
 
