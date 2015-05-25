@@ -162,6 +162,7 @@ public:
     ~EQMeshSimplifier()override {}
 
 
+
     void SetPairThreshold(float t)
     {
         pairThresholdSqrd = t*t;
@@ -231,10 +232,6 @@ public:
         return true;
     }
 
-    bool Simplify(const octet::ref<octet::mesh> toSimplify, octet::mesh* toWritten) override
-    {
-        return false;
-    }
 
 private:
     void Reset()

@@ -445,6 +445,12 @@
     <ClInclude Include="MeshSimplifier.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Mesh_Name_Field.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI_Algo_start_Button.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">
