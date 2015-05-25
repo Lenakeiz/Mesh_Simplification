@@ -12,8 +12,10 @@
 #include "../../octet.h"
 #include"UI_element.h"
 #include"UI_button.h"
+#include"UI_Algo_start_Button.h"
+#include"Mesh_Name_field.h"
 #include"UI_sys.h"
-#include "Mesh_Simplification.h"
+#include"Mesh_Simplification.h"
 
 /// Create a box with octet
 int main(int argc, char **argv) {

@@ -217,7 +217,9 @@
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="EQMeshSimplifier.h" />
     <ClInclude Include="MeshSimplifier.h" />
+    <ClInclude Include="Mesh_Name_Field.h" />
     <ClInclude Include="Mesh_Simplification.h" />
+    <ClInclude Include="UI_Algo_start_Button.h" />
     <ClInclude Include="UI_button.h" />
     <ClInclude Include="UI_element.h" />
     <ClInclude Include="UI_sys.h" />

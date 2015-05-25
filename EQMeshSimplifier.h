@@ -10,7 +10,7 @@ public:
     EQMeshSimplifier(){}
     ~EQMeshSimplifier()override {}
 
-    bool Simplify(octet::mesh& toSimplify)override
+    bool Simplify(octet::mesh& toSimplify)//override
     {}
 
 private:
