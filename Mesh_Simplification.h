@@ -15,6 +15,7 @@ namespace octet {
     UI_sys GUI_sys;
     UI_Algo_start_Button* m_xSubmitButton;
 
+	ref<mesh> importedMesh;
     string m_sMeshURL;
     int m_iTargetFaces;
     int m_iTargettri;
@@ -246,6 +247,68 @@ namespace octet {
       }
 
     }
+
+	void KeyboardInputControl()
+	{
+		if (is_key_going_down('1'))
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else if (is_key_going_down('2'))
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+		if (is_key_down(key::key_esc))
+		{
+			exit(1);
+		}
+		float speed = 1;
+		if (is_key_down(key::key_shift))
+		{
+			speed = 0.08;
+		}
+		if (is_key_down('W'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, speed, 0);
+		}
+		if (is_key_down('S'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, -speed, 0);
+		}
+		if (is_key_down('E'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, -speed);
+		}
+		if (is_key_down('Q'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, speed);
+		}
+		if (is_key_down('A'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(-speed, 0, 0);
+		}
+		if (is_key_down('D'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(speed, 0, 0);
+		}
+		if (is_key_down('Z'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().rotateX(-speed);
+		}
+		if (is_key_down('X'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().rotateX(speed);
+		}
+		if (is_key_down('C'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().rotateY(speed);
+		}
+		if (is_key_down('V'))
+		{
+			app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().rotateY(-speed);
+		}
+	}
+
   public:
     /// this is called when we construct the class before everything is initialised.
     Mesh_Simplification(int argc, char **argv) : app(argc, argv) {
@@ -270,6 +333,12 @@ namespace octet {
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
       FillInputKeyArray();
+
+	  Obj_Importer* importer = new Obj_Importer("NewRex.obj");
+	  if (importer->loadObj())
+	  {
+		  importedMesh = importer->buildMesh();
+	  }
 
       //UI Buttons
       m_xSubmitButton = new UI_Algo_start_Button(vec2(vx/2, vy-50), vec2(50,35), -1.0f, vec2(), vec2());
@@ -344,6 +413,8 @@ namespace octet {
 
     /// this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
+
+      
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
       app_scene->begin_render(vx, vy);
