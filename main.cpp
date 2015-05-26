@@ -15,6 +15,7 @@
 #include"UI_Algo_start_Button.h"
 #include"Mesh_Name_field.h"
 #include"UI_sys.h"
+#include "Obj_Importer.h"
 #include"Mesh_Simplification.h"
 
 /// Create a box with octet
