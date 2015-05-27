@@ -219,6 +219,7 @@
     <ClInclude Include="MeshSimplifier.h" />
     <ClInclude Include="Mesh_Name_Field.h" />
     <ClInclude Include="Mesh_Simplification.h" />
+    <ClInclude Include="Obj_Importer.h" />
     <ClInclude Include="UI_Algo_start_Button.h" />
     <ClInclude Include="UI_button.h" />
     <ClInclude Include="UI_element.h" />

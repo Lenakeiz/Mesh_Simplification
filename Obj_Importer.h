@@ -45,11 +45,11 @@ namespace octet
 		hash_map < mesh::vertex, unsigned> duplicatesMap;
 		std::vector<uint32_t> out_indices;
 		std::vector<vec3> out_normals;
-		char* path;
+		const char* path;
 		
 	public:
 
-		bool loadObj(char* _path, ref<mesh> refMesh)
+		bool loadObj(const char* _path, ref<mesh> refMesh)
 		{
 			path = _path;
 

@@ -32,6 +32,9 @@ namespace octet {
     bool m_bContinue = false;
     bool m_bSaveMesh = false;
 
+    EQMeshSimplifier simples;
+    Obj_Importer* importer;
+
     dynarray<string> m_sAlgoString;
     dynarray<Mesh_Name_Field*> m_pxUserInputFields;
     dynarray<int> m_xUserInputKeyCode;
@@ -154,13 +157,13 @@ namespace octet {
           break;
         case 1:m_xMeshText[i]->format("Target Num Faces :\n%s", m_sAlgoString[i].c_str());
           break;
-        case 2:m_xMeshText[i]->format("Target Num Tri :\n%s", m_sAlgoString[i].c_str());
+        case 2:m_xMeshText[i]->format("Target Num Verticies :\n%s", m_sAlgoString[i].c_str());
           break;
         case 3:m_xMeshText[i]->format("Vertex Proxi Pair :\n%s", m_sAlgoString[i].c_str());
           break;
         case 4:m_xMeshText[i]->format("Max Error Threshold:\n%s", m_sAlgoString[i].c_str());
           break;
-        case 5:m_xMeshText[i]->format("Continues Per Run:\n%s", m_sAlgoString[i].c_str());
+        case 5:m_xMeshText[i]->format("Contractions Per Run:\n%s", m_sAlgoString[i].c_str());
           break;
         }
         m_xMeshText[i]->update();
@@ -334,9 +337,26 @@ namespace octet {
       }
     }
 
+    void SetVariables()
+    {
+        simples.SetContractionMaxCost(m_fMaxErrorth);
+        simples.SetTargetNumVertices(m_iTargettri);
+        simples.SetTargetNumTriangles(m_iTargetFaces);
+        simples.SetRemovalsPerSimplification(m_iSimplificationPerRun);
+        simples.SetPairThreshold(m_fVertProxi);
+    }
+
   public:
     /// this is called when we construct the class before everything is initialised.
     Mesh_Simplification(int argc, char **argv) : app(argc, argv) {
+
+        m_sMeshURL="newRex.obj";
+        m_iTargetFaces=0;
+        
+        m_iTargettri=0;
+        m_fVertProxi=0;
+        m_fMaxErrorth=100000.0f;
+        m_iSimplificationPerRun=500;
     }
 
     ~Mesh_Simplification() {
@@ -360,14 +380,18 @@ namespace octet {
     void app_init() {
       app_scene = new visual_scene();
       app_scene->create_default_camera_and_lights();
+      app_scene->get_camera_instance(0)->set_far_plane(1000);
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
       FillInputKeyArray();
-
-      Obj_Importer* importer = new Obj_Importer("NewRex.obj");
-      if (importer->loadObj())
+      SetVariables();
+       importer = new Obj_Importer();
+       mesh* importedMesh = new mesh;
+      if (importer->loadObj(m_sMeshURL.c_str(),importedMesh))
       {
-        mesh* importedMesh = importer->buildMesh();
+          
+        importer->buildMesh();
+        simples.Init(importedMesh);
         scene_node* node = new scene_node();
         node->scale(vec3(0.1f, 0.1f, 0.1f));
         app_scene->add_scene_node(node);
@@ -407,12 +431,12 @@ namespace octet {
       m_pxUserInputFields.push_back(xContinuePerRun);
       //The Strings Inputs from the user 
       //push back the string in the dyne array
-      string sMeshName;
-      string sTargetNumFaces;
-      string sTargetNumTri;
-      string sVtxProxPair;
-      string sMaxErrTh;
-      string sContinuePerRun;
+      string sMeshName="newRex.obj";
+      string sTargetNumFaces="0";
+      string sTargetNumTri="0";
+      string sVtxProxPair="0";
+      string sMaxErrTh="100000";
+      string sContinuePerRun="500";
       m_sAlgoString.push_back(sMeshName);
       m_sAlgoString.push_back(sTargetNumFaces);
       m_sAlgoString.push_back(sTargetNumTri);
@@ -429,7 +453,7 @@ namespace octet {
       bitmap_font *font = m_xoverlay->get_default_font();
       //UI Text
       aabb bb_Text1(vec3(150 - vx / 2, vy / 2 - 90, 1.0f), vec3(150.0f, 30.0f, 0.0f));
-      mesh_text* UIText1 = new mesh_text(font, "", &bb_Text1);
+      mesh_text* UIText1 = new mesh_text(font, "Hi", &bb_Text1);
 
       aabb bb_Text2(vec3(150 - vx / 2, vy / 2 - 165, 1.0f), vec3(150.0f, 30.0f, 0.0f));
       mesh_text* UIText2 = new mesh_text(font, "", &bb_Text2);
@@ -468,6 +492,7 @@ namespace octet {
       app_scene->begin_render(vx, vy);
 
       // update matrices. assume 30 fps.
+      KeyboardInputControl();
       app_scene->update(1.0f / 30);
       if (!m_bMeshNameOnFocus)
       {
@@ -538,6 +563,12 @@ namespace octet {
       {
         m_pxSubmitButton->SetSubmit(false);
         ConvertStringsToNumbers();
+        SetVariables();
+        if (importer->loadObj(m_sMeshURL, app_scene->get_mesh_instance(0)->get_mesh()))
+        {
+            importer->buildMesh();
+            simples.Init(app_scene->get_mesh_instance(0)->get_mesh());
+        }
         //start the algo
       }
 
@@ -546,7 +577,9 @@ namespace octet {
       {
         m_pxContinueButton->SetSubmit(false);
         ConvertStringsToNumbers();
+        SetVariables();
         //continue to the next step
+        simples.Simplify(app_scene->get_mesh_instance(0)->get_mesh());
       }
 
       m_bSaveMesh = m_pxSaveMeshButton->IsSubmit();
