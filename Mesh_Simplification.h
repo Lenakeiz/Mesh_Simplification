@@ -250,6 +250,10 @@ namespace octet {
 
 	void KeyboardInputControl()
 	{
+		if (is_key_going_down(key::key_esc))
+		{
+			exit(0);
+		}
 		if (is_key_going_down('1'))
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -338,6 +342,11 @@ namespace octet {
 	  if (importer->loadObj())
 	  {
 		  importedMesh = importer->buildMesh();
+		  scene_node* node = new scene_node();
+		  node->scale(vec3(0.1f, 0.1f, 0.1f));
+		  app_scene->add_scene_node(node);
+
+		  app_scene->add_mesh_instance(new mesh_instance(node, importedMesh, new material(vec4(0, 1, 0, 1))));
 	  }
 
       //UI Buttons
@@ -414,10 +423,11 @@ namespace octet {
     /// this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
 
-      
+	  KeyboardInputControl();
+
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
-      app_scene->begin_render(vx, vy);
+      app_scene->begin_render(vx, vy, vec4(0,0,0,1));
 
       // update matrices. assume 30 fps.
       app_scene->update(1.0f/30);
