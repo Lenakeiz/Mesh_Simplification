@@ -33,12 +33,17 @@ private:
         }
         void Replace(int argA, int data)
         {
+			if (indexA == -1) return;
             if (indexA == argA){indexA = data;}
             else if (indexB == argA){ indexB = data; }
             else if (indexC == argA){ indexC = data; }
         }
+		bool isAlive()
+		{
+			return indexA != -1;
+		}
 
-        unsigned int indexA,
+        int indexA,
             indexB,
             indexC;
     };
@@ -238,16 +243,18 @@ private:
     {
         currentMesh = nullptr;
 
+		vertexToTriangles.clear();
+
         pairs.clear();
         triangles.clear();
         contractions.clear();
         errorMatrices.clear();
-
     }
+
     void GetResources(unsigned int* & idx, float* & vtx)
     {
-            vtx = &vertices[0].arr[0];
-            idx = (unsigned int*)triangles.data();
+        vtx = &vertices[0].arr[0];
+        idx = (unsigned int*)triangles.data();
     }
 
     void InitMeshAttribOffsets()
@@ -325,6 +332,13 @@ private:
         
     }
 
+	octet::vec3 CalculateTriangleNormal(const IndexTriangle& tr)
+	{
+		return (GetVertexPos(tr.indexB) - GetVertexPos(tr.indexA)).cross(
+			GetVertexPos(tr.indexC) - GetVertexPos(tr.indexA));
+
+	}
+
     octet::vec3 CalculateTriangleNormal(int index)
     {
         return (GetVertexPos(triangles[index].indexB)-GetVertexPos(triangles[index].indexA)).cross(
@@ -339,6 +353,7 @@ private:
             return &vertices[index].arr[Vertex::posOffset];
         
     }
+
     void AddPlaneToMatrix(octet::vec3& norm, float dist, octet::mat4t& matrix)
     {
         /*
@@ -360,14 +375,20 @@ private:
 
     void BuildTriangles(const unsigned int* idx)
     {
+		triangles.reserve(currentMesh->get_num_indices() / 3);
         for (int i = 0; i < currentMesh->get_num_indices(); i += 3)
         {
             triangles.push_back(IndexTriangle(idx[i], idx[i + 1], idx[i + 2]));
+			vertexToTriangles[idx[i]].push_back(&triangles.back());
+			vertexToTriangles[idx[i + 1]].push_back(&triangles.back());
+			vertexToTriangles[idx[i + 2]].push_back(&triangles.back());
         }
     }
+
     void BuildVertices(float * vtx)
     {
         vertices.resize(currentMesh->get_num_vertices());
+		vertexToTriangles.resize(currentMesh->get_num_vertices());
         memcpy(vertices.data(), vtx, currentMesh->get_num_vertices()*Vertex::size*sizeof(float));
     }
 
@@ -389,7 +410,8 @@ private:
                 }
             }
         }
-        //
+
+        //This loop will remain
         for (int i = 0;i < triangles.size(); ++i)
         {
            int indexA=triangles[i].indexA,
@@ -491,11 +513,57 @@ private:
         return false;
     }
 
+	//HERE
     bool CheckInversion(octet::vec4& vBar, int a, int b)
     {
-        for (int i = 0; i < triangles.size(); ++i)
+		octet::vec3 v1, v2, v3;
+		octet::vec3 startingNorm;
+		octet::vec3 endNorm;
+		IndexTriangle* t;
+		float test;
+
+		for (int i = 0; i < vertexToTriangles[a].size(); ++i)
+		{
+			t = vertexToTriangles[a][i];
+			startingNorm = CalculateTriangleNormal(*t);			
+
+			t->indexA == a ? v1 = vBar.xyz() : v1 = GetVertexPos(t->indexA);
+			t->indexB == a ? v2 = vBar.xyz() : v2 = GetVertexPos(t->indexB);
+			t->indexC == a ? v3 = vBar.xyz() : v3 = GetVertexPos(t->indexC);
+
+			endNorm = (v2 - v1).cross(v3 - v1);
+			test = endNorm.dot(startingNorm);
+			if (endNorm.dot(startingNorm) < 0)
+			{
+				return true;
+			}
+
+		}
+
+		for (int i = 0; i < vertexToTriangles[b].size(); ++i)
+		{
+			t = vertexToTriangles[b][i];
+			startingNorm = CalculateTriangleNormal(*t);
+			
+			t->indexA == b ? v1 = vBar.xyz() : v1 = GetVertexPos(t->indexA);
+			t->indexB == b ? v2 = vBar.xyz() : v2 = GetVertexPos(t->indexB);
+			t->indexC == b ? v3 = vBar.xyz() : v3 = GetVertexPos(t->indexC);
+
+			endNorm = (v2 - v1).cross(v3 - v1);
+			test = endNorm.dot(startingNorm);
+			if (endNorm.dot(startingNorm) < 0)
+			{
+				return true;
+			}
+
+		}
+
+		return false;
+
+        /*for (int i = 0; i < triangles.size(); ++i)
         {
             int targetReplace = -1;
+
             if (triangles[i].Contains(a))
             {
                 targetReplace = a;
@@ -521,7 +589,7 @@ private:
                 }
             }
         } 
-        return false;
+        return false;*/
     }
 
     void RemovePairs(unsigned int *idx, float* vtx){
@@ -573,27 +641,99 @@ private:
         octet::vec3 bNormal=vertices[indexB].GetNorm();
         *aPos = newAB;
         *aNormalAligned = (aNormal+bNormal).normalize();
+		vertexToTriangles[indexA].insert(vertexToTriangles[indexA].begin(),
+			vertexToTriangles[indexB].begin(),
+			vertexToTriangles[indexB].end());
         return indexA;
     }
-
+	//HERE 
     void RemoveTris(int indexA, int indexB)
     {
-        for (int i = 0; i < triangles.size(); ++i)
-        {
-            if (triangles[i].ContainsBoth(indexA, indexB))
-            {
-                std::swap(triangles[i], triangles.back());
-                triangles.pop_back();
-                i--;
-            }
-        }
-    }
+		
+		for (int i=0; i< vertexToTriangles[indexA].size(); ++i)
+		{
+			IndexTriangle* t = vertexToTriangles[indexA][i];
+			if (t->ContainsBoth(indexA, indexB) || !t->isAlive())
+			{
+				int a = t->indexA;
+				int b = t->indexB;
+				int c = t->indexC;
+				t->indexA = -1;
+				t->indexB = -1;
+				t->indexC = -1;
 
+
+				std::vector<IndexTriangle*>::iterator ity;
+				for (ity = vertexToTriangles[a].begin();
+					ity != vertexToTriangles[a].end();
+					)
+				{
+					if (!(*ity)->isAlive())
+					{
+						ity=vertexToTriangles[a].erase(ity);
+						continue;
+					}
+					++ity;
+				}
+				for (ity = vertexToTriangles[b].begin();
+					ity != vertexToTriangles[b].end();
+					)
+				{
+					if (!(*ity)->isAlive())
+					{
+						ity=vertexToTriangles[b].erase(ity);
+						continue;
+					}
+					++ity;
+				}
+				for (ity = vertexToTriangles[c].begin();
+					ity != vertexToTriangles[c].end();
+					)
+				{
+					if (!(*ity)->isAlive())
+					{
+						ity=vertexToTriangles[c].erase(ity);
+						continue;
+					}
+					++ity;
+				}
+				i--;
+			}
+		}
+
+		//for (it = vertexToTriangles[indexB].begin(); it != vertexToTriangles[indexB].end(); ++it)
+		//{
+		//	if ((*it)->ContainsBoth(indexA, indexB)||!(*it)->isAlive())
+		//	{
+		//		//inverting the index
+		//		(*it)->indexA = -1;
+		//		(*it)->indexB = -1;
+		//		(*it)->indexC = -1;
+		//		it=vertexToTriangles[indexB].erase(it);
+		//		it--;
+		//	}
+		//}
+
+    //    for (int i = 0; i < triangles.size(); ++i)
+    //    {
+    //        if (triangles[i].ContainsBoth(indexA, indexB))
+    //        {
+
+				////SET ALL INDICIES IN TRIANGLE TO -1
+				////THEN CHECK THAT WHEN WE LOOP TOUGH THE SUBSET IN VERTEXTOTRIANGLE
+
+    //            //std::swap(triangles[i], triangles.back());
+    //            //triangles.pop_back();
+    //            i--;
+    //        }
+    //    }
+    }
+	//HERE
     void ReplaceIndex(int targetIndexA, int targetIndexB, int replacement, bool calculateMatrix=true)
     {
+		//TODO change this for loop
         for (int i = 0; i < triangles.size(); ++i)
         {
-            triangles[i].Replace(targetIndexA, replacement);
             triangles[i].Replace(targetIndexB, replacement);
         }
         if (calculateMatrix)
@@ -648,13 +788,21 @@ private:
             idx = (unsigned int*)iLock.u16();
 
             std::map<int,int> indexToRealMap;
-            std::vector<IndexTriangle> meshTris;
+			std::vector<IndexTriangle> meshTris;
             meshTris.assign(triangles.begin(),triangles.end());
 
             int writeIndex=0;
             std::map<int,int>::iterator it;
             for (int i = 0; i < meshTris.size(); ++i)
             {
+				if (!meshTris[i].isAlive())
+				{
+					std::swap(meshTris[i], meshTris.back());
+					meshTris.pop_back();
+					i--;
+					continue;
+				}
+
                 it = indexToRealMap.find(meshTris[i].indexA);
                 if (it!= indexToRealMap.end())
                 {
@@ -696,7 +844,7 @@ private:
             }
             memcpy(idx,meshTris.data(),sizeof(IndexTriangle)*meshTris.size());
 
-           currentMesh->set_num_indices(triangles.size()*3);
+           currentMesh->set_num_indices(meshTris.size()*3);
            currentMesh->set_num_vertices(writeIndex);
         
     }
@@ -711,6 +859,8 @@ private:
 
     std::vector<Vertex> vertices;
     std::vector<IndexTriangle> triangles;
+
+	std::vector<std::vector<IndexTriangle*>> vertexToTriangles;
 
     std::set<IndexEdge> pairs;
     std::vector<Contraction> contractions;
