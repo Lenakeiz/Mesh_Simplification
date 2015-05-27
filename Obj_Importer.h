@@ -49,12 +49,22 @@ namespace octet
 		
 	public:
 
-		bool loadObj()
+		bool loadObj(char* _path, ref<mesh> refMesh)
 		{
+			path = _path;
+
+			if (&(*refMesh) == &(*importedMesh))
+			{
+				printf("Mesh already loaded");
+				return false;
+			}
+
+			importedMesh = refMesh;
+
 			FILE* file = fopen(path, "r");
 			if (file == NULL)
 			{
-				printf("Impossible to read the file");
+				printf("Impossible to open the file");
 				return false;
 			}
 
@@ -100,9 +110,6 @@ namespace octet
 						return false;
 					}
 
-					/*mesh::vertex out_vtx1;
-					mesh::vertex out_vtx2;
-					mesh::vertex out_vtx3;*/
 
 					vertexIndices.push_back(vertexIndex[0] - 1);
 					vertexIndices.push_back(vertexIndex[1] - 1);
@@ -121,37 +128,15 @@ namespace octet
 					out_normals[vertexIndex[1] - 1] += calculatedNormal;
 					out_normals[vertexIndex[2] - 1] += calculatedNormal;
 
-					//preparing mesh::vertex structure
-					/*out_vtx1.pos = vertices[vertexIndex[0] - 1];
-					out_vtx1.uv = uvs[uvIndex[0] - 1];
-					out_vtx1.normal = normals[normalIndex[0] - 1];
-
-					out_vertices.push_back(out_vtx1);
-					out_indices.push_back(i);
-					i++;
-
-					out_vtx2.pos    = vertices[vertexIndex[1] - 1];
-					out_vtx2.uv     = uvs[uvIndex[1] - 1];
-					out_vtx2.normal = normals[normalIndex[1] - 1];
-
-					out_vertices.push_back(out_vtx2);
-					out_indices.push_back(i);
-					i++;
-
-					out_vtx3.pos = vertices[vertexIndex[2] - 1];
-					out_vtx3.uv = uvs[uvIndex[2] - 1];
-					out_vtx3.normal = normals[normalIndex[2] - 1];
-
-					out_vertices.push_back(out_vtx3);
-					out_indices.push_back(i);
-					i++;*/
 				}
 			}
 			return true;			
 		}
 
-		mesh* buildMesh()
+		void buildMesh()
 		{
+
+			importedMesh->clear_attributes();
 
 			for (uint32_t i = 0; i < vertices.size(); i++)
 			{
@@ -174,13 +159,10 @@ namespace octet
 			memcpy(vtx, out_vertices.data(), sizeof(mesh::vertex) * out_vertices.size());
 			memcpy(idx, vertexIndices.data(), sizeof(uint32_t)* vertexIndices.size());
 						
-			return importedMesh;
 		}
 
-		Obj_Importer(char* _path)
+		Obj_Importer()
 		{
-			path = _path;
-			importedMesh = new mesh();
 		}
 
 		~Obj_Importer()
