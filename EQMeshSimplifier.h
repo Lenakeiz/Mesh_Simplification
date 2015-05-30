@@ -607,11 +607,11 @@ private:
             }
             Contraction curr = contractions.back();
             contractions.pop_back();
-            if (curr.cost > contractionMaxCost)
-            {
-                return;
-            }
-
+            //if (curr.cost > contractionMaxCost)
+            //{
+              //  return;
+            //}
+            //
 
             int newIndex = Merge(vtx, curr.v1Index, curr.v2Index, curr.vBar);
             //Merge() -into slot of lowest index

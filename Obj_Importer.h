@@ -53,11 +53,11 @@ namespace octet
 		{
 			path = _path;
 
-			if (&(*refMesh) == &(*importedMesh))
+			/*if (&(*refMesh) == &(*importedMesh))
 			{
 				printf("Mesh already loaded");
 				return false;
-			}
+			}*/
 
 			importedMesh = refMesh;
 

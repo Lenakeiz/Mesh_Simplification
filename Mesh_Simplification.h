@@ -4,10 +4,11 @@
 //
 // Modular Framework for OpenGLES2 rendering on multiple platforms.
 //
+#include "EQMeshSimplifier.h"
 namespace octet {
   /// Scene containing a box with octet.
 
-#include "EQMeshSimplifier.h"
+
 
   class Mesh_Simplification : public app {
     // scene for drawing box
@@ -43,6 +44,8 @@ namespace octet {
     text_overlay *m_xoverlay;
     dynarray<mesh_text*> m_xMeshText;
     int m_iTextVX, m_iTextVY;
+
+    bool wireframe;
 
     void FillInputKeyArray()
     {
@@ -260,7 +263,7 @@ namespace octet {
       m_iSimplificationPerRun = 0;
       for (int i = 0; i<m_sAlgoString[5].size(); i++)
       {
-        m_iTargettri *= 10;
+          m_iSimplificationPerRun *= 10;
         if (m_sAlgoString[5][i] == '.' || m_sAlgoString[5][i] > 57 || m_sAlgoString[5][i] < 48)
         {
           break;
@@ -278,13 +281,17 @@ namespace octet {
       {
         exit(0);
       }
-      if (is_key_going_down('1'))
+      if (is_key_going_down(' '))
       {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      }
-      else if (is_key_going_down('2'))
-      {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          wireframe=!wireframe;
+          if (wireframe)
+          {
+              glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          }
+          else
+          {
+              glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          }
       }
       if (is_key_down(key::key_esc))
       {
@@ -357,6 +364,7 @@ namespace octet {
         m_fVertProxi=0;
         m_fMaxErrorth=100000.0f;
         m_iSimplificationPerRun=500;
+        wireframe =false;
     }
 
     ~Mesh_Simplification() {
@@ -579,6 +587,7 @@ namespace octet {
         ConvertStringsToNumbers();
         SetVariables();
         //continue to the next step
+        m_pxContinueButton-
         simples.Simplify(app_scene->get_mesh_instance(0)->get_mesh());
       }
 
