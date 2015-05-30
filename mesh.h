@@ -482,18 +482,59 @@ namespace octet {
         fprintf(file, "</model>\n");
       }
 
-
+      
       void dump1(vec3 ret_vert[]) {
+        gl_resource::rolock vtx_lock(get_vertices());    
+
+        
+     
+          for (unsigned i = 0; i != num_vertices; ++i) {            
+            vec4 value = get_value(vtx_lock.u8(), 0, i);
+            ret_vert[i] = vec3(value[0], value[1], value[2]);           
+          }       
+        
+        
+      }
+
+      void DumpToOBJ(FILE* file,string FileName,string TextureURL)
+      {
         gl_resource::rolock vtx_lock(get_vertices());
+        gl_resource::rolock idx_lock(get_indices());
 
+        fprintf(file, "mtllib %s.mtl\n", FileName);
+        for (unsigned slot = 0; slot != num_slots; ++slot) {
+          const char *fmt[] = { "", "%f\n", "%f %f\n", "%f %f %f\n", "%f %f %f %f\n" };
+          for (unsigned i = 0; i != num_vertices; ++i) {
+            vec4 value = get_value(vtx_lock.u8(), slot, i);
+            switch (slot)
+            {
+              case 0: fprintf(file, "v ");
+                      break;
+              case 1:fprintf(file, "vn ");
+                      break;
+              case 2: fprintf(file, "vt ");
+                      break;
+            }
+            fprintf(file, fmt[get_size(slot)], value[0], value[1], value[2], value[3]);
+          }
+          if (slot == 2 && TextureURL.size()>0)
+          {
+            fprintf(file, "usemtl %s", TextureURL);
+          }
+        }        
+        //we cant write this as we dont have enough data
+        unsigned ni = get_num_indices();
+        for (unsigned i = 0; i != ni; ++i) {
+          if (i%3==0)
+            fprintf(file, "f ");
 
-
-        for (unsigned i = 0; i != num_vertices; ++i) {
-          vec4 value = get_value(vtx_lock.u8(), 0, i);
-          ret_vert[i] = vec3(value[0], value[1], value[2]);
+          int indx = get_index(idx_lock.u8(), i)+1;
+          fprintf(file, "%d/0/0 ", indx);
+          
+          if (i%3==2)
+            fprintf(file, "\n");
         }
-
-
+        
       }
 
       /// When rendering a mesh, call this first to enable the attributes.

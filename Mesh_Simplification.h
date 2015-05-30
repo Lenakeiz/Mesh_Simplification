@@ -47,6 +47,9 @@ namespace octet {
 
     bool wireframe;
 
+    bool m_bContinueColourToggle = false;
+    
+
     void FillInputKeyArray()
     {
 
@@ -406,7 +409,7 @@ namespace octet {
 
         app_scene->add_mesh_instance(new mesh_instance(node, importedMesh, new material(vec4(0, 1, 0, 1))));
       }
-
+      
       //UI Buttons
       m_pxSubmitButton = new UI_Algo_start_Button(vec2(vx / 2 - 150, vy - 50), vec2(50, 35), -1.0f, vec2(0.0f, 0.7470f), vec2(0.25f, 0.9335f));
       m_pxContinueButton = new UI_Algo_start_Button(vec2(vx / 2, vy - 50), vec2(50, 35), -1.0f, vec2(0.5039f, 0.8144f), vec2(0.7568f, 1.0f));
@@ -569,6 +572,7 @@ namespace octet {
       m_bFieldSubmit = m_pxSubmitButton->IsSubmit();
       if (m_bFieldSubmit)
       {
+        m_pxSubmitButton->Set_texture_UV(vec2(0.2548f, 0.5566f), vec2(0.5019f, 0.7470f));
         m_pxSubmitButton->SetSubmit(false);
         ConvertStringsToNumbers();
         SetVariables();
@@ -583,19 +587,31 @@ namespace octet {
       m_bContinue = m_pxContinueButton->IsSubmit();
       if (m_bContinue)
       {
-        m_pxContinueButton->SetSubmit(false);
+        if (!m_bContinueColourToggle)
+        {
+          m_pxContinueButton->Set_texture_UV(vec2(0.75039f, 0.8144f), vec2(1.0f, 1.0f));
+        }
+        else
+        {
+          m_pxContinueButton->Set_texture_UV(vec2(0.5039f, 0.8144f), vec2(0.75039f, 1.0f));
+        }
+        m_bContinueColourToggle = !m_bContinueColourToggle;
         ConvertStringsToNumbers();
         SetVariables();
-        //continue to the next step
-        m_pxContinueButton-
+        //continue to the next step        
         simples.Simplify(app_scene->get_mesh_instance(0)->get_mesh());
+        m_pxContinueButton->SetSubmit(false);
       }
+      
 
       m_bSaveMesh = m_pxSaveMeshButton->IsSubmit();
       if (m_bSaveMesh)
       {
         m_pxSaveMeshButton->SetSubmit(false);
-        //if the mesh is made save it
+        m_pxSaveMeshButton->Set_texture_UV(vec2(0.0f, 0.5566f), vec2(0.25f, 0.7470f));
+        
+        FILE* NewFile = fopen("OptimizedMesh.obj", "w");
+        app_scene->get_mesh_instance(0)->get_mesh()->DumpToOBJ(NewFile,"OptimizedMesh", "");
       }
       app_scene->render((float)vx / vy);
       GUI_sys.update(vx, vy);
