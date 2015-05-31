@@ -19,7 +19,7 @@ namespace octet {
     UI_Algo_start_Button* m_pxSaveMeshButton;
     Mesh_Name_Field* m_pxDeselect;
 
-    string m_sMeshURL;
+    
     int m_iTargetFaces;
     int m_iTargettri;
     float m_fVertProxi;
@@ -48,7 +48,7 @@ namespace octet {
     bool wireframe;
 
     bool m_bContinueColourToggle = false;
-    
+    bool m_bFirstMesh = true;
 
     void FillInputKeyArray()
     {
@@ -359,8 +359,7 @@ namespace octet {
   public:
     /// this is called when we construct the class before everything is initialised.
     Mesh_Simplification(int argc, char **argv) : app(argc, argv) {
-
-        m_sMeshURL="newRex.obj";
+        
         m_iTargetFaces=0;
         
         m_iTargettri=0;
@@ -384,6 +383,7 @@ namespace octet {
       {
         delete m_pxUserInputFields[i];
       }
+      delete importer;
     }
     // texture for on select and deselect on field
 
@@ -396,19 +396,7 @@ namespace octet {
       get_viewport_size(vx, vy);
       FillInputKeyArray();
       SetVariables();
-       importer = new Obj_Importer();
-       mesh* importedMesh = new mesh;
-      if (importer->loadObj(m_sMeshURL.c_str(),importedMesh))
-      {
-          
-        importer->buildMesh();
-        simples.Init(importedMesh);
-        scene_node* node = new scene_node();
-        node->scale(vec3(0.1f, 0.1f, 0.1f));
-        app_scene->add_scene_node(node);
-
-        app_scene->add_mesh_instance(new mesh_instance(node, importedMesh, new material(vec4(0, 1, 0, 1))));
-      }
+       
       
       //UI Buttons
       m_pxSubmitButton = new UI_Algo_start_Button(vec2(vx / 2 - 150, vy - 50), vec2(50, 35), -1.0f, vec2(0.0f, 0.7470f), vec2(0.25f, 0.9335f));
@@ -442,7 +430,7 @@ namespace octet {
       m_pxUserInputFields.push_back(xContinuePerRun);
       //The Strings Inputs from the user 
       //push back the string in the dyne array
-      string sMeshName="newRex.obj";
+      string sMeshName="newrex.obj";
       string sTargetNumFaces="0";
       string sTargetNumTri="0";
       string sVtxProxPair="0";
@@ -464,7 +452,7 @@ namespace octet {
       bitmap_font *font = m_xoverlay->get_default_font();
       //UI Text
       aabb bb_Text1(vec3(150 - vx / 2, vy / 2 - 90, 1.0f), vec3(150.0f, 30.0f, 0.0f));
-      mesh_text* UIText1 = new mesh_text(font, "Hi", &bb_Text1);
+      mesh_text* UIText1 = new mesh_text(font, "", &bb_Text1);
 
       aabb bb_Text2(vec3(150 - vx / 2, vy / 2 - 165, 1.0f), vec3(150.0f, 30.0f, 0.0f));
       mesh_text* UIText2 = new mesh_text(font, "", &bb_Text2);
@@ -571,15 +559,29 @@ namespace octet {
       }
       m_bFieldSubmit = m_pxSubmitButton->IsSubmit();
       if (m_bFieldSubmit)
-      {
+      {        
         m_pxSubmitButton->Set_texture_UV(vec2(0.2548f, 0.5566f), vec2(0.5019f, 0.7470f));
         m_pxSubmitButton->SetSubmit(false);
         ConvertStringsToNumbers();
         SetVariables();
-        if (importer->loadObj(m_sMeshURL, app_scene->get_mesh_instance(0)->get_mesh()))
+        importer = new Obj_Importer();
+        mesh* importedMesh = new mesh;
+        if (importer->loadObj(m_sAlgoString[0].c_str(), importedMesh))
         {
-            importer->buildMesh();
-            simples.Init(app_scene->get_mesh_instance(0)->get_mesh());
+          if (!m_bFirstMesh)
+          {
+            app_scene->PopMeshInstance();
+          }
+          else
+          {
+            m_bFirstMesh = false;
+          }
+          importer->buildMesh();
+          simples.Init(importedMesh);
+          scene_node* node = new scene_node();
+          node->scale(vec3(0.1f, 0.1f, 0.1f));
+          app_scene->add_scene_node(node);
+          app_scene->add_mesh_instance(new mesh_instance(node, importedMesh, new material(vec4(0, 1, 0, 1))));                  
         }
         //start the algo
       }
@@ -610,8 +612,8 @@ namespace octet {
         m_pxSaveMeshButton->SetSubmit(false);
         m_pxSaveMeshButton->Set_texture_UV(vec2(0.0f, 0.5566f), vec2(0.25f, 0.7470f));
         
-        FILE* NewFile = fopen("OptimizedMesh.obj", "w");
-        app_scene->get_mesh_instance(0)->get_mesh()->DumpToOBJ(NewFile,"OptimizedMesh", "");
+        FILE* NewFile = fopen("optimizedmesh.obj", "w");
+        app_scene->get_mesh_instance(0)->get_mesh()->DumpToOBJ(NewFile,"optimizedmesh", "");
       }
       app_scene->render((float)vx / vy);
       GUI_sys.update(vx, vy);
