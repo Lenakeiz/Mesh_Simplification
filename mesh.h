@@ -524,17 +524,18 @@ namespace octet {
         }        
         //we cant write this as we dont have enough data
         unsigned ni = get_num_indices();
-        for (unsigned i = 0; i != ni; ++i) {
-          if (i%3==0)
-            fprintf(file, "f ");
+        
+        for (unsigned i = 0; i < ni; ++i) {
+            if (i % 3 == 0)
+                fprintf(file, "f ");
 
-          int indx = get_index(idx_lock.u8(), i)+1;
-          fprintf(file, "%d/0/0 ", indx);
-          
+                int indx = get_index(idx_lock.u8(), i) + 1;
+                fprintf(file, "%d/%d/%d ", indx, indx, indx);
+            
           if (i%3==2)
             fprintf(file, "\n");
         }
-        
+        fclose(file);
       }
 
       /// When rendering a mesh, call this first to enable the attributes.

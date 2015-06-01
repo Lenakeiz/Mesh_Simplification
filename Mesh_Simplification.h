@@ -397,6 +397,7 @@ namespace octet {
       FillInputKeyArray();
       SetVariables();
        
+      importer=new Obj_Importer();
       
       //UI Buttons
       m_pxSubmitButton = new UI_Algo_start_Button(vec2(vx / 2 - 150, vy - 50), vec2(50, 35), -1.0f, vec2(0.0f, 0.7470f), vec2(0.25f, 0.9335f));
@@ -564,25 +565,20 @@ namespace octet {
         m_pxSubmitButton->SetSubmit(false);
         ConvertStringsToNumbers();
         SetVariables();
-        importer = new Obj_Importer();
-        mesh* importedMesh = new mesh;
-        if (importer->loadObj(m_sAlgoString[0].c_str(), importedMesh))
+        if (m_bFirstMesh)
         {
-          if (!m_bFirstMesh)
-          {
-            app_scene->PopMeshInstance();
-          }
-          else
-          {
             m_bFirstMesh = false;
-          }
-          importer->buildMesh();
-          simples.Init(importedMesh);
-          scene_node* node = new scene_node();
-          node->scale(vec3(0.1f, 0.1f, 0.1f));
-          app_scene->add_scene_node(node);
-          app_scene->add_mesh_instance(new mesh_instance(node, importedMesh, new material(vec4(0, 1, 0, 1))));                  
+            mesh* meshy = new mesh();
+            scene_node* node = new scene_node();
+            node->scale(vec3(0.1f, 0.1f, 0.1f));
+            app_scene->add_scene_node(node);
+            app_scene->add_mesh_instance(new mesh_instance(node, meshy, new material(vec4(0, 1, 0, 1))));
         }
+        if (importer->loadObj(m_sAlgoString[0].c_str(),app_scene->get_mesh_instance(0)->get_mesh()))
+        {
+          importer->buildMesh();
+          simples.Init(app_scene->get_mesh_instance(0)->get_mesh());
+          }
         //start the algo
       }
 
